@@ -1,0 +1,38 @@
+# Artifacts that must never be committed to this repo.
+
+# Model weights / quantized blobs
+*.safetensors
+*.bin
+*.pt
+*.pth
+*.gguf
+*.npz
+*.onnx
+model.safetensors.index.json
+
+# Caches
+__pycache__/
+*.py[cod]
+.pytest_cache/
+triton-cache/
+torchinductor-cache/
+
+# Secrets
+.env
+.env.*
+*.pem
+*.key
+id_rsa
+id_ed25519
+token.json
+credentials.json
+
+# Logs / run output
+*.log
+run-logs/
+*.pid
+
+# Local scratch
+.venv/
+venv/
+.DS_Store
