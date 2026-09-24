@@ -13,6 +13,48 @@ benchmark harnesses). It is meant as a reference for people trying to get a
 
 ---
 
+## Credits and what is mine here
+
+**This runtime is built on the work of [weicj](https://github.com/weicj) and the
+[`vLLM-2080Ti-Definitive`](https://github.com/weicj/vLLM-2080Ti-Definitive)
+project.** That project is the foundation: the `sm_75` build toolchain, the
+launcher, the profile system, and the general approach of running vLLM on
+memory-modded Turing cards all come from it. If you are doing this yourself,
+start there.
+
+**What I added on top** is a newer model/runtime point plus configuration-level
+tuning around it:
+
+- **Moved the stack forward** — `vLLM 0.2.1rc2` (base `0.27.1`), PyTorch
+  `2.13.0+cu130`, CUDA 13.0, transformers `5.15.1`, on driver 595.84. Upstream at
+  the time of writing targets base `0.21.0` / torch `2.11.0+cu128` / CUDA 12.8.
+- **New profile set for a 230K-context NVFP4 model** — the `qwen3.8-27b` family
+  under `profiles/` is mine; upstream ships `qwen27b` and `qwen35b`.
+- **Tuning work** — explicit `--kv-cache-memory-bytes`, FP8 KV cache, MTP `k=5`,
+  and the piecewise cudagraph capture list `[6, 2048]` that includes the
+  chunked-prefill budget rather than only the decode shape.
+- **Ops glue** — the GPU clock/power governor and the benchmark methodology notes
+  in this repo.
+
+The `vLLM-2080Ti-Definitive` checkout on my box is a git
+worktree tracking upstream `weicj/vLLM-2080Ti-Definitive`; commits in it are
+authored by weicj, not by me. I am not the author of that project and do not
+claim to be. **Everything in this repo is my own configuration and notes layered
+on top of it.**
+
+### Licensing consequence
+
+`vLLM-2080Ti-Definitive` is **Apache-2.0** (as is vLLM itself). Apache-2.0
+requires that derivative works retain attribution and the license notice. So:
+
+- The MIT license in this repo covers **my own original content** (the profiles,
+  notes, governor, and benchmark scripts written for this repo).
+- That MIT grant **does not relicense** weicj's project or vLLM. If you reuse
+  their code, their Apache-2.0 terms apply.
+- See [NOTICE](NOTICE) for the specific attribution statement.
+
+---
+
 ## Hardware
 
 | Item | Value |
@@ -42,12 +84,16 @@ Key hardware notes:
 
 | Component | Version |
 | --- | --- |
-| vLLM | `0.2.1rc2` (custom `sm_75` build) |
-| Base vLLM | `0.27.1` |
+| vLLM | `0.2.1rc2` (custom `sm_75` build, from `vLLM-2080Ti-Definitive`) |
+| Base vLLM migrated to | `0.27.1` |
 | PyTorch | `2.13.0+cu130` |
 | CUDA | `13.0` (torch build), driver 595.84 |
 | transformers | `5.15.1` |
 | Python | `3.12.3` |
+
+> Upstream `vLLM-2080Ti-Definitive` at the time of writing targets base vLLM
+> `0.21.0` with torch `2.11.0+cu128` / CUDA 12.8 on driver 590.48.01. The
+> versions above are the newer stack this repo documents.
 
 ## Models
 
@@ -130,6 +176,10 @@ profile answered the request.
 profile is a plain `KEY=VALUE` env file; the launcher translates it into CLI
 flags. Keeping them as files rather than shell history is what makes the tuning
 reproducible and diffable.
+
+> **Origin:** the profile *convention* and the launcher that consumes these files
+> come from [`weicj/vLLM-2080Ti-Definitive`](https://github.com/weicj/vLLM-2080Ti-Definitive)
+> (Apache-2.0). The `qwen3.8-27b` profile *contents* below are mine.
 
 | Profile | Context | MTP | KV dtype | Quant | Notes |
 | --- | --- | --- | --- | --- | --- |
@@ -236,6 +286,9 @@ python3 benchmarks/p7_bench.py <label>
 ```
 .
 ├── README.md
+├── README.zh-CN.md               # Chinese translation
+├── NOTICE                        # upstream attribution (Apache-2.0 §4d)
+├── LICENSE                       # MIT (this repo's original content only)
 ├── launch/
 │   ├── serve.sh                  # the launch command as a script
 │   └── vllm-clock-governor.sh    # GPU clock/power governor daemon
@@ -256,6 +309,18 @@ Deliberately excluded:
 
 ## License
 
-Documentation and scripts here are provided as-is for reference, under the MIT
-License (see [LICENSE](LICENSE)). Note that vLLM itself is Apache-2.0 and the
-model weights carry their own license from their upstream author — respect both.
+Original content in this repository — the `qwen3.8-27b` profiles, the notes and
+READMEs, `launch/vllm-clock-governor.sh`, `launch/serve.sh`, and the benchmark
+scripts — is released under the **MIT License** (see [LICENSE](LICENSE)).
+
+That MIT grant covers only that original content. It does **not** relicense the
+upstream dependencies:
+
+- [`weicj/vLLM-2080Ti-Definitive`](https://github.com/weicj/vLLM-2080Ti-Definitive)
+  — **Apache-2.0**. This runtime configuration is built on it; attribution is
+  required and is provided in [NOTICE](NOTICE).
+- vLLM itself — **Apache-2.0**.
+- The referenced model weights — licensed by their own upstream author.
+
+Respect each upstream's terms when reusing their work. Full attribution is in
+[NOTICE](NOTICE).

@@ -12,6 +12,44 @@
 
 ---
 
+## 致谢，以及我做了什么
+
+**这套运行环境建立在 [weicj](https://github.com/weicj) 的
+[`vLLM-2080Ti-Definitive`](https://github.com/weicj/vLLM-2080Ti-Definitive)
+项目之上。** 那个项目是地基：`sm_75` 构建工具链、launcher、profile 体系，
+以及「在魔改显存的图灵卡上跑 vLLM」这条整体路线，都来自它。如果你想自己动手，
+请从那里开始。
+
+**我在此基础上叠加的**是一个更新的模型/运行时版本点，以及围绕它的配置级调优：
+
+- **把技术栈往前推** —— `vLLM 0.2.1rc2`（基线 `0.27.1`）、PyTorch
+  `2.13.0+cu130`、CUDA 13.0、transformers `5.15.1`，驱动 595.84。上游在撰写时
+  指向的是基线 `0.21.0` / torch `2.11.0+cu128` / CUDA 12.8。
+- **针对 230K 上下文 NVFP4 模型的新 profile 组** —— `profiles/` 下的
+  `qwen3.8-27b` 系列是我加的；上游只有 `qwen27b` 和 `qwen35b`。
+- **调优工作** —— 显式指定 `--kv-cache-memory-bytes`、FP8 KV cache、MTP `k=5`，
+  以及把 chunked-prefill 预算一并纳入的 piecewise cudagraph 捕获列表
+  `[6, 2048]`（而不是只捕获解码形状）。
+- **运维配套** —— GPU 锁频/功耗调节脚本，以及本仓库的基准测试方法说明。
+
+我机器上的 `vLLM-2080Ti-Definitive` 检出是一个追踪上游
+`weicj/vLLM-2080Ti-Definitive` 的 git worktree；里面提交的作者是 weicj，不是我。
+我不是那个项目的作者，也不做此声明。**本仓库中的一切都是我在其之上叠加的
+自有配置与笔记。**
+
+### 许可层面的后果
+
+`vLLM-2080Ti-Definitive` 采用 **Apache-2.0**（vLLM 本身也是）。Apache-2.0 要求
+衍生作品保留署名与许可声明。因此：
+
+- 本仓库的 MIT 许可覆盖的是**我自己原创的内容**（为本仓库编写的 profile、
+  笔记、governor 与基准脚本）。
+- 该 MIT 授权**不会**重新许可 weicj 的项目或 vLLM。如果你复用他们的代码，
+  仍然适用其 Apache-2.0 条款。
+- 具体署名声明见 [NOTICE](NOTICE)。
+
+---
+
 ## 硬件
 
 | 项目 | 参数 |
@@ -39,12 +77,15 @@
 
 | 组件 | 版本 |
 | --- | --- |
-| vLLM | `0.2.1rc2`（自编译 `sm_75` 版本） |
-| vLLM 基线 | `0.27.1` |
+| vLLM | `0.2.1rc2`（自编译 `sm_75` 版本，来自 `vLLM-2080Ti-Definitive`） |
+| 迁移到的 vLLM 基线 | `0.27.1` |
 | PyTorch | `2.13.0+cu130` |
 | CUDA | `13.0`（torch 构建版），驱动 595.84 |
 | transformers | `5.15.1` |
 | Python | `3.12.3` |
+
+> 上游 `vLLM-2080Ti-Definitive` 在撰写时指向的是 vLLM 基线 `0.21.0`、
+> torch `2.11.0+cu128` / CUDA 12.8、驱动 590.48.01。上表是本仓库记录的新版栈。
 
 ## 模型
 
@@ -228,6 +269,8 @@ python3 benchmarks/p7_bench.py <label>
 .
 ├── README.md                     # 英文说明
 ├── README.zh-CN.md               # 本文件
+├── NOTICE                        # 上游署名声明
+├── LICENSE                       # MIT（仅覆盖本仓库原创内容）
 ├── launch/
 │   ├── serve.sh                  # 启动命令脚本版
 │   └── vllm-clock-governor.sh    # GPU 锁频/功耗守护进程
@@ -247,5 +290,14 @@ python3 benchmarks/p7_bench.py <label>
 
 ## 许可
 
-本仓库的文档与脚本按 MIT 许可提供，仅作参考（见 [LICENSE](LICENSE)）。注意 vLLM
-本身是 Apache-2.0，而模型权重遵循其上游作者自己的许可 —— 两者都请遵守。
+本仓库**自有原创内容**（profile 文件、笔记、governor、基准脚本）按 MIT 许可提供，
+仅作参考（见 [LICENSE](LICENSE)）。
+
+该 MIT 授权**不覆盖**上游依赖：
+
+- [`weicj/vLLM-2080Ti-Definitive`](https://github.com/weicj/vLLM-2080Ti-Definitive)
+  —— **Apache-2.0**，本仓库的运行配置正建立在其之上。
+- vLLM 本身 —— **Apache-2.0**。
+- 模型权重 —— 遵循其上游作者自己的许可。
+
+复用上述任一方的代码时，请遵守其各自的条款；完整署名见 [NOTICE](NOTICE)。

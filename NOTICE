@@ -1,0 +1,51 @@
+# NOTICE
+
+This repository documents a runtime configuration layered on top of third-party
+software. Attribution for that upstream work follows.
+
+## vLLM-2080Ti-Definitive
+
+This project's runtime configuration is built on, and derived from, the work of
+**weicj** and the `vLLM-2080Ti-Definitive` project:
+
+    vLLM-2080Ti-Definitive
+    Copyright weicj
+    https://github.com/weicj/vLLM-2080Ti-Definitive
+    Licensed under the Apache License, Version 2.0
+
+The `sm_75` build toolchain, the launcher design, the profile-file system, and
+the overall approach of running vLLM on memory-modded RTX 2080 Ti cards
+(22GB + NVLink) originate from that project. The profile files under
+`profiles/` in this repository follow its `KEY=VALUE` profile convention and are
+intended to be consumed by its launcher.
+
+## vLLM
+
+    vLLM
+    Copyright contributors to the vLLM project
+    https://github.com/vllm-project/vllm
+    Licensed under the Apache License, Version 2.0
+
+## Scope of this repository's own license
+
+Original content authored for this repository — the `qwen3.8-27b` profile files,
+the README and notes, `launch/vllm-clock-governor.sh`, `launch/serve.sh`, and the
+benchmark scripts under `benchmarks/` — is released under the MIT License (see
+`LICENSE`).
+
+That MIT grant applies **only** to that original content. It does not relicense
+`vLLM-2080Ti-Definitive`, vLLM, or any model weights. If you reuse their code,
+their respective Apache-2.0 terms apply unchanged.
+
+## Model weights
+
+Not distributed here. The referenced model
+(`orcarouter-Qwen3.8-27B-Uncensored-NVFP4`) carries its own license from its
+upstream author — consult that source before use or redistribution.
+
+## A note on authorship
+
+The author of this repository is **not** the author of `vLLM-2080Ti-Definitive`.
+A local checkout of that project exists on the author's machine as a git
+worktree tracking upstream; its commits are authored by weicj. Nothing in this
+repository claims otherwise.
